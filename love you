@@ -1,0 +1,385 @@
+package com.example.loveyou
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.loveyou.ui.theme.LoveYouTheme
+import kotlinx.coroutines.delay
+import kotlin.math.*
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            LoveYouTheme {
+                MainContainer()
+            }
+        }
+    }
+}
+
+@Composable
+fun MainContainer() {
+    // 界面状态：boot -> confession -> note
+    var screenState by remember { mutableStateOf("boot") }
+
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        when (screenState) {
+            "boot" -> {
+                BootScreen(onFinished = { screenState = "confession" })
+            }
+            "confession" -> {
+                ConfessionScreen(onFinished = { screenState = "note" })
+            }
+            "note" -> {
+                NoteScreen()
+            }
+        }
+    }
+}
+
+@Composable
+fun BootScreen(onFinished: () -> Unit) {
+    val pathCode = "你自己的名字，70行/ Heart/ 你自己的名字 the whole world"
+    var displayedText by remember { mutableStateOf("") }
+    val greenColor = Color(0xFF00FF00)
+
+    LaunchedEffect(Unit) {
+        delay(1000)
+        val lines = listOf(
+            "> Initializing boot sequence...",
+            "> Connection secure.",
+            "> Accessing path: $pathCode",
+            "> System ready. Starting heart.app..."
+        )
+
+        for (line in lines) {
+            val currentLine = displayedText
+            for (i in line.indices) {
+                displayedText = currentLine + line.substring(0, i + 1)
+                delay(40)
+            }
+            displayedText += "\n"
+            delay(400)
+        }
+        delay(1000)
+        onFinished()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = displayedText,
+            color = greenColor,
+            fontSize = 18.sp,
+            fontFamily = FontFamily.Monospace,
+            lineHeight = 28.sp
+        )
+    }
+}
+
+@Composable
+fun ConfessionScreen(onFinished: () -> Unit) {
+    val messages = remember {
+        listOf(
+            "记得吃早餐", "多喝热水呀", "别熬夜太晚", "你是最棒的", "想你了呀",
+            "今天辛苦了", "注意保暖哦", "你是我的光", "开心每一天", "遇见你真好",
+            "要按时吃饭", "梦里见哦", "为你骄傲", "你是唯一的", "加油鸭！",
+            "照顾好自己", "早点休息哈", "你是最可爱", "心动不止", "一直都在",
+            "愿你顺心", "你是宝藏", "多笑笑哦", "好梦相随", "你是动力",
+            "爱你么么哒", "你是奇迹", "温暖如你", "你是骄傲", "平安喜乐",
+            "你最闪耀", "你是依靠", "万事胜意", "你是未来", "共度余生",
+            "你是星辰", "你是大海", "你是全部", "你是我唯一", "爱你永远",
+            "记得想我", "保持联系", "你是阳光", "你是月亮", "你是繁星",
+            "爱你如初", "你是宝贝", "你是最美", "你是最好的", "爱你不停",
+            "你是归宿", "你是梦想"
+        )
+    }
+
+    val macStickyColors = listOf(
+        Color(0xFFFFFBBD), Color(0xFFE3F9B9), Color(0xFFB9F2FF),
+        Color(0xFFFFD1FB), Color(0xFFFFD7B9)
+    )
+
+    val totalNotes = 52
+    val scale = 10f
+
+    var notesAnimationStarted by remember { mutableStateOf(false) }
+    var textAnimationStarted by remember { mutableStateOf(false) }
+
+    val noteData = remember {
+        (0 until totalNotes).map { i ->
+            val t = (2 * PI * i) / totalNotes
+            val x = 16 * sin(t).pow(3.0)
+            val y = -(13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t))
+            Triple(x.toFloat(), y.toFloat(), i)
+        }.sortedWith(compareBy({ it.second }, { it.first }))
+    }
+
+    LaunchedEffect(Unit) {
+        delay(300)
+        notesAnimationStarted = true
+        delay(totalNotes * 40L + 1000L)
+        textAnimationStarted = true
+        // 文字显示完后延迟进入下一页
+        delay(4000)
+        onFinished()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        noteData.forEachIndexed { index, (x, y, originalIndex) ->
+            val animatedProgress = animateFloatAsState(
+                targetValue = if (notesAnimationStarted) 1f else 0f,
+                animationSpec = tween(durationMillis = 800, delayMillis = index * 40, easing = EaseOutBack),
+                label = "note_$index"
+            )
+
+            MacStickyNote(
+                message = messages[originalIndex % messages.size],
+                color = macStickyColors[originalIndex % macStickyColors.size],
+                rotation = (originalIndex * 13f) % 20f - 10f,
+                modifier = Modifier
+                    .offset(x = (x * scale * animatedProgress.value).dp, y = (y * scale * animatedProgress.value).dp)
+                    .graphicsLayer {
+                        alpha = animatedProgress.value
+                        scaleX = animatedProgress.value.coerceAtLeast(0.1f)
+                        scaleY = animatedProgress.value.coerceAtLeast(0.1f)
+                    }
+            )
+        }
+
+        Column(
+            modifier = Modifier.offset(y = 30.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row {
+                "请写上你爱人的名字，定位在192行".forEachIndexed { index, char ->
+                    FlipTextChar(char = char, trigger = textAnimationStarted, delayMillis = index * 300, fontSize = 24.sp)
+                }
+            }
+            Spacer(modifier = Modifier.height(6.dp))
+            Row {
+                "我爱你".forEachIndexed { index, char ->
+                    FlipTextChar(char = char, trigger = textAnimationStarted, delayMillis = 900 + index * 300, fontSize = 18.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun NoteScreen() {
+    val scrollState = rememberScrollState()
+    var startAnimation by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        delay(100)
+        startAnimation = true
+    }
+
+    // 整个界面的翻页效果
+    val flipProgress by animateFloatAsState(
+        targetValue = if (startAnimation) 1f else 0f,
+        animationSpec = tween(durationMillis = 1200, easing = EaseInOutQuart),
+        label = "note_screen_flip"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                rotationX = (1f - flipProgress) * -90f
+                alpha = flipProgress
+                cameraDistance = 12f * density
+            }
+            .background(Color.Black)
+            .statusBarsPadding()
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top App Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = {}) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                }
+                Row {
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Default.Share, contentDescription = "Share", tint = Color.White)
+                    }
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Default.Palette, contentDescription = "Theme", tint = Color.White)
+                    }
+                    IconButton(onClick = {}) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More", tint = Color.White)
+                    }
+                }
+            }
+
+            // Scrollable Content
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 24.dp)
+            ) {
+                Text(
+                    text = "这里可以写你爱人的名字，267行",
+                    color = Color.White,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
+                )
+
+                Text(
+                    text = """可以在这里写你想对爱人说的话，定位在275行""",
+                    color = Color(0xFFE0E0E0),
+                    fontSize = 17.sp,
+                    lineHeight = 30.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(48.dp))
+
+                Text(
+                    text = "这里可以写上你的名字，285行",
+                    color = Color.Gray,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 80.dp),
+                    textAlign = TextAlign.End
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FlipTextChar(char: Char, trigger: Boolean, delayMillis: Int, fontSize: androidx.compose.ui.unit.TextUnit) {
+    val rotationX = animateFloatAsState(
+        targetValue = if (trigger) 0f else -90f,
+        animationSpec = tween(
+            durationMillis = 600,
+            delayMillis = delayMillis,
+            easing = FastOutSlowInEasing
+        ),
+        label = "flip_$char"
+    )
+
+    val alpha = animateFloatAsState(
+        targetValue = if (trigger) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 300,
+            delayMillis = delayMillis
+        ),
+        label = "alpha_$char"
+    )
+
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 2.dp)
+            .graphicsLayer {
+                this.rotationX = rotationX.value
+                cameraDistance = 12f * density
+            }
+            .background(
+                if (alpha.value > 0.1f) Color(0xFF222222) else Color.Transparent,
+                RoundedCornerShape(4.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = char.toString(),
+            color = Color.White,
+            fontSize = fontSize,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.graphicsLayer { this.alpha = alpha.value }
+        )
+    }
+}
+
+@Composable
+fun MacStickyNote(message: String, color: Color, rotation: Float, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .size(34.dp)
+            .rotate(rotation),
+        color = color,
+        shape = RoundedCornerShape(1.dp),
+        shadowElevation = 1.dp
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(color.copy(alpha = 0.6f))
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(1.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = message,
+                    color = Color.Black.copy(alpha = 0.8f),
+                    fontSize = 7.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 9.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ConfessionPreview() {
+    LoveYouTheme {
+        MainContainer()
+    }
+}
