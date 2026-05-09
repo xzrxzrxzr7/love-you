@@ -1,0 +1,45 @@
+# Gradle files
+.gradle/
+build/
+*.jar
+*.aar
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+local.properties
+
+# Build output
+app/build/
+*.apk
+*.ap_
+*.aab
+
+# Libraries
+libs/
+
+# AS specific
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+
+# Python
+*.py[cod]
+__pycache__/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# Misc
+*.log
